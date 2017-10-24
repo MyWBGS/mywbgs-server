@@ -23,5 +23,6 @@ app.use('/', routes);
     await Db.sequelize.sync();
     const events = await Gateway.getCalendar();
 
-    app.listen(config.get('port'), () => console.log(`Server listening on *:${config.get('port')}`));
+    const port = process.env.PORT || config.get('port');
+    app.listen(port, () => console.log(`Server listening on *:${port}`));
 })();
