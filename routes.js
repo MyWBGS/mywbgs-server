@@ -1,0 +1,125 @@
+// @ts-check
+const router = require('express').Router();
+const Student = require('./lib/student');
+const Assignment = require('./lib/assignment');
+const Db = require('./lib/db');
+const Gateway = require('./lib/gateway');
+
+const authenticate = (req, res, next) => {
+    if(req.signedCookies['auth']) {
+        req.username = req.signedCookies['auth'].toLowerCase().trim();
+        next();
+    } else {
+        res.sendStatus(401);
+    }
+}
+
+router.post('/student/authenticate', async (req, res) => {
+    const username = req.body['username'].toLowerCase().trim();
+    const password = req.body['password'];
+
+    const result = await Student.authenticate(username, password);
+    if(result) {
+        const expiry = new Date();
+        expiry.setFullYear(expiry.getFullYear() + 1);
+        res.cookie('auth', username, {
+            expires: expiry,
+            signed: true,
+            httpOnly: true
+        })
+        res.json({success: true});
+    } else {
+        res.json({success: false, result: 'INVALID_AUTH'})
+    }
+});
+
+router.get('/student/info', authenticate, async (req, res) => {
+    // @ts-ignore
+    const username = req.username;
+    const info = (await Student.get(username)).get({plain: true});
+    delete info.hash;
+    delete info.createdAt;
+    delete info.updatedAt;
+    res.json(info);
+});
+
+router.get('/student/lessons', authenticate, async (req, res) => {
+    // @ts-ignore
+    const username = req.username;
+    const lessons = (await Student.getLessons(username)).map(lesson => lesson.get({plain: true}));
+    lessons.forEach(lesson => {
+        delete lesson.student;
+        delete lesson.createdAt;
+        delete lesson.updatedAt;
+    });
+    res.json(lessons);
+});
+
+router.route('/assignment')
+    .all(authenticate)
+    .get(async (req, res) => {
+        // @ts-ignore
+        const username = req.username;
+        const assignments = await Assignment.getAllForUser(username);
+        res.json(assignments);
+    })
+    .post(async (req, res) => {
+        // @ts-ignore
+        const username = req.username;
+        try {
+            const assignment = await Assignment.create(req.body, username);
+            res.json({success: true, result: assignment});
+        } catch(err) {
+            if(err.name === 'ValidationError') {
+                res.status(400).json({success: false, result: err.get()});
+            } else {
+                throw err;
+            }
+        }
+    });
+
+router.route('/assignment/:id')
+    .all(authenticate, async (req, res, next) => {
+        const assignment = await Assignment.get(req.params.id);
+        if(!assignment) return res.sendStatus(404);
+
+        // @ts-ignore
+        const username = req.username;
+        if(!assignment.belongsTo(username)) return res.sendStatus(401);
+        
+        // @ts-ignore
+        req.assignment = assignment;
+        next();
+    })
+    .get(async (req, res) => {
+        // @ts-ignore
+        const assignment = req.assignment.get({plain: true});
+        delete req.body.studentUsername;
+        res.json(assignment);
+    })
+    .put(async (req, res) => {
+        // @ts-ignore
+        const assignment = req.assignment;
+        try {
+            await Assignment.update(assignment, req.body);
+            res.json({success: true, result: null});
+        } catch(err) {
+            if(err.name === 'ValidationError') {
+                res.status(400).json({success: false, result: err.get()});
+            } else {
+                throw err;
+            }
+        }
+    })
+    .delete(async (req, res) => {
+        // @ts-ignore
+        await req.assignment.destroy();
+        res.json({success: true});
+    });
+
+router.get('/calendar', authenticate, async (req, res) => {
+    const events = await Gateway.getCalendar();
+    res.json(events);
+});
+
+module.exports = {router};
