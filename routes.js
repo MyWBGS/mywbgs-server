@@ -55,6 +55,19 @@ router.get('/student/lessons', authenticate, async (req, res) => {
     res.json(lessons);
 });
 
+router.get('/student/timetable', authenticate, async (req, res) => {
+    // @ts-ignore
+    const username = req.username;
+    const lessons = (await Student.getLessons(username)).map(lesson => lesson.get({plain: true}));
+    lessons.forEach(lesson => {
+        delete lesson.student;
+        delete lesson.createdAt;
+        delete lesson.updatedAt;
+    });
+    const timetable = await Student.makeTimetable(lessons);
+    res.json(timetable);
+});
+
 router.route('/assignment')
     .all(authenticate)
     .get(async (req, res) => {
