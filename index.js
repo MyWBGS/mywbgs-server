@@ -14,7 +14,7 @@ const routes = require('./routes').router;
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser(config.get('cookie_secret')));
+app.use(cookieParser(process.env.COOKIE_SECRET || config.get('cookie_secret')));
 app.use(helmet());
 
 app.use('/', routes);
