@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const schedule = require('node-schedule');
+const cors = require('cors');
 const Db = require('./lib/db');
 const Gateway = require('./lib/gateway');
 const routes = require('./routes').router;
@@ -16,6 +17,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser(process.env.COOKIE_SECRET || config.get('cookie_secret')));
 app.use(helmet());
+
+if(config.has('valid_origins')) {
+    app.use(cors({
+        origin: config.get('valid_origins'),
+        credentials: true
+    }));
+    app.options('*', cors(config.get('valid_origins')));
+}
 
 app.use('/', routes);
 

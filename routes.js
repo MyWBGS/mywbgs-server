@@ -24,8 +24,7 @@ router.post('/student/authenticate', async (req, res) => {
         expiry.setFullYear(expiry.getFullYear() + 1);
         res.cookie('auth', username, {
             expires: expiry,
-            signed: true,
-            httpOnly: true
+            signed: true
         })
         res.json({success: true});
     } else {
@@ -114,7 +113,7 @@ router.route('/assignment/:id')
         // @ts-ignore
         const assignment = req.assignment;
         try {
-            await Assignment.update(assignment, req.body);
+            await assignment.update(req.body);
             res.json({success: true, result: null});
         } catch(err) {
             if(err.name === 'ValidationError') {

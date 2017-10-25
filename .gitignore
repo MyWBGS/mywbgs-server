@@ -1,5 +1,5 @@
 node_modules
-config
+config/development.json
 *.sqlite
 test.js
 .vscode
