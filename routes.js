@@ -4,13 +4,19 @@ const Student = require('./lib/student');
 const Assignment = require('./lib/assignment');
 const Db = require('./lib/db');
 const Gateway = require('./lib/gateway');
+const Token = require('./lib/token');
 
-const authenticate = (req, res, next) => {
-    if(req.signedCookies['auth']) {
-        req.username = req.signedCookies['auth'].toLowerCase().trim();
-        next();
+const authenticate = async (req, res, next) => {
+    if(req.get('X-Auth')) {
+        try {
+            const tokenData = await Token.decode(req.get('X-Auth'));
+            req.username = tokenData.username;
+            next();
+        } catch(err) {
+            res.status(401);
+        }
     } else {
-        res.sendStatus(401);
+        res.status(400).send('X-Auth header missing');
     }
 }
 
@@ -20,13 +26,8 @@ router.post('/student/authenticate', async (req, res) => {
 
     const result = await Student.authenticate(username, password);
     if(result) {
-        const expiry = new Date();
-        expiry.setFullYear(expiry.getFullYear() + 1);
-        res.cookie('auth', username, {
-            expires: expiry,
-            signed: true
-        })
-        res.json({success: true});
+        const token = await Token.encode({username}, "1y");
+        res.json({success: true, result: token});
     } else {
         res.json({success: false, result: 'INVALID_AUTH'})
     }
