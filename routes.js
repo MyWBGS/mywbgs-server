@@ -115,7 +115,7 @@ router.route('/assignment/:id')
         const assignment = req.assignment;
         try {
             await assignment.update(req.body);
-            res.json({success: true, result: null});
+            res.json({success: true, result: assignment.get({plain: true})});
         } catch(err) {
             if(err.name === 'ValidationError') {
                 res.status(400).json({success: false, result: err.get()});
