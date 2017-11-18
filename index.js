@@ -12,17 +12,13 @@ const Gateway = require('./lib/gateway');
 const routes = require('./routes').router;
 
 const app = express();
+app.set('trust proxy', 1);
+app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(helmet());
-
-if(config.has('valid_origins')) {
-    app.use(cors({
-        origin: config.get('valid_origins'),
-        credentials: true
-    }));
-    app.options('*', cors(config.get('valid_origins')));
-}
+app.use(cors({
+    origin: ['https://mywbgs.org', 'http://localhost:3000'],
+}));
 
 app.use('/', routes);
 
