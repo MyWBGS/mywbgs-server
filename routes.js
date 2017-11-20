@@ -46,24 +46,14 @@ router.get('/student/info', authenticate, async (req, res) => {
 router.get('/student/lessons', authenticate, async (req, res) => {
     // @ts-ignore
     const username = req.username;
-    const lessons = (await Student.getLessons(username)).map(lesson => lesson.get({plain: true}));
-    lessons.forEach(lesson => {
-        delete lesson.student;
-        delete lesson.createdAt;
-        delete lesson.updatedAt;
-    });
+    const lessons = await Student.getLessons(username);
     res.json(lessons);
 });
 
 router.get('/student/timetable', authenticate, async (req, res) => {
     // @ts-ignore
     const username = req.username;
-    const lessons = (await Student.getLessons(username)).map(lesson => lesson.get({plain: true}));
-    lessons.forEach(lesson => {
-        delete lesson.student;
-        delete lesson.createdAt;
-        delete lesson.updatedAt;
-    });
+    const lessons = await Student.getLessons(username);
     const timetable = await Student.makeTimetable(lessons);
     res.json(timetable);
 });
