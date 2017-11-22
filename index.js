@@ -7,12 +7,19 @@ const bodyParser = require('body-parser');
 const helmet = require('helmet');
 const schedule = require('node-schedule');
 const cors = require('cors');
+const Raven = require('raven');
 const Db = require('./lib/db');
 const Gateway = require('./lib/gateway');
 const routes = require('./routes').router;
 
+const PRODUCTION = process.env.NODE_ENV === 'production';
+
 const app = express();
 app.set('trust proxy', 1);
+if(PRODUCTION) {
+    Raven.config(process.env.SENTRY_DSN).install();
+    app.use(Raven.requestHandler());
+}
 app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -21,6 +28,13 @@ app.use(cors({
 }));
 
 app.use('/', routes);
+
+if(PRODUCTION) {
+    app.use(Raven.errorHandler());
+    app.use((err, req, res, next) => {
+        res.status(500).send(res.sentry);
+    });
+}
 
 (async () => {
     await Db.sequelize.sync();
