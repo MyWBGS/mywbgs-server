@@ -9,7 +9,7 @@ const schedule = require('node-schedule');
 const cors = require('cors');
 const Raven = require('raven');
 const Db = require('./lib/db');
-const Gateway = require('./lib/gateway');
+const Cache = require('./lib/cache');
 const routes = require('./routes').router;
 
 const PRODUCTION = process.env.NODE_ENV === 'production';
@@ -38,7 +38,8 @@ if(PRODUCTION) {
 
 (async () => {
     await Db.sequelize.sync();
-    const events = await Gateway.getCalendar();
+    await Cache.update();
+    schedule.scheduleJob('0 0 * * MON', Cache.update);
 
     const port = process.env.PORT || config.get('port');
     app.listen(port, () => console.log(`Server listening on *:${port}`));

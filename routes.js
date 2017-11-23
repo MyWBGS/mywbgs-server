@@ -5,6 +5,7 @@ const Assignment = require('./lib/assignment');
 const Db = require('./lib/db');
 const Gateway = require('./lib/gateway');
 const Token = require('./lib/token');
+const Cache = require('./lib/cache');
 
 const authenticate = async (req, res, next) => {
     if(req.get('X-Auth')) {
@@ -121,8 +122,11 @@ router.route('/assignment/:id')
     });
 
 router.get('/calendar', authenticate, async (req, res) => {
-    const events = await Gateway.getCalendar();
-    res.json(events);
+    res.json(Cache.get(Cache.KEY_CALENDAR));
+});
+
+router.get('/menu', authenticate, async (req, res) => {
+    res.json(Cache.get(Cache.KEY_MENU));
 });
 
 module.exports = {router};
