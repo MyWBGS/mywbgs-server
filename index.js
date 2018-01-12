@@ -1,6 +1,4 @@
 // @ts-check
-const http = require('http');
-const https = require('https');
 const config = require('config');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -37,6 +35,7 @@ if(PRODUCTION) {
 }
 
 (async () => {
+    await Db.migrate();
     await Db.sequelize.sync();
     await Cache.update();
     schedule.scheduleJob('0 0 * * MON', Cache.update);
