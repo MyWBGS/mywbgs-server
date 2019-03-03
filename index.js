@@ -22,7 +22,7 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cors({
-    origin: ['https://mywbgs.org', 'http://localhost:3000'],
+    origin: ['https://mywbgs.org', 'http://localhost:3000', 'https://yearbook.mywbgs.org'],
 }));
 
 app.use('/', routes);
