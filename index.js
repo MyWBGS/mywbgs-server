@@ -38,7 +38,7 @@ if(PRODUCTION) {
     await Db.migrate();
     await Db.sequelize.sync();
     await Cache.update();
-    schedule.scheduleJob('0 0 * * MON', Cache.update);
+    schedule.scheduleJob('0 0 * * MON', () => Cache.update());
 
     const port = process.env.PORT || config.get('port');
     app.listen(port, () => console.log(`Server listening on *:${port}`));
